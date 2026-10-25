@@ -1104,7 +1104,12 @@ async function boot() {
   if (!hsync && standalone && !Sync.token()) setTimeout(openSync, 600);
   // Links handed over by an iPhone Shortcut: …/WeeklyFood/#share=<link>
   const hs = (location.hash || "").match(/^#share=(.+)$/);
-  if (hs) { history.replaceState(null, "", location.pathname); showView("book", false); setTimeout(() => openRecipe(decodeURIComponent(hs[1])), 0); }
+  if (hs) {
+    history.replaceState(null, "", location.pathname);
+    let raw = hs[1]; try { raw = decodeURIComponent(raw); } catch {}
+    const link = (raw.match(/https?:\/\/\S+/) || [raw])[0];
+    showView("book", false); setTimeout(() => openRecipe(link), 0);
+  }
 }
 
 /* ---------- Backup: save everything to a file, or load a backup file ---------- */
@@ -1906,7 +1911,7 @@ function openRecipe(url, dishName) {
   modal.innerHTML = `<form class="sheet" id="recipeForm" role="dialog" aria-modal="true" aria-labelledby="rT">
     <div class="sheet-head"><h3 id="rT">Lưu link cách nấu</h3></div>
     <div class="sheet-body">
-      <label>Link cách nấu<input class="input" id="rLink" required value="${esc(url || "")}" placeholder="Nhấn Ctrl + V để dán link" autocomplete="off"></label>
+      <label>Link cách nấu<span style="display:flex;gap:.4rem"><input class="input" id="rLink" required value="${esc(url || "")}" placeholder="Dán link cách nấu" autocomplete="off" inputmode="url"><button type="button" class="btn" id="rPaste" style="flex:none">📋 Dán</button></span></label>
       <label>Tên món<input class="input" id="rName" required list="rNames" value="${esc(dishName || "")}" placeholder="Ví dụ: Canh sườn cà chua dứa" autocomplete="off"></label>
       <datalist id="rNames">${names.map(n => `<option value="${esc(n)}">`).join("")}</datalist>
       <p class="footnote" id="rHint">Chọn món có sẵn trong sổ, hoặc gõ tên mới để tạo món mới.</p>
@@ -1926,6 +1931,13 @@ function openRecipe(url, dishName) {
   };
   name.addEventListener("input", update); update();
   (url ? name : link).focus();
+  f.querySelector("#rPaste").onclick = async () => {
+    try {
+      const t = (await navigator.clipboard.readText() || "").trim(), m = t.match(/https?:\/\/\S+/);
+      if (!m) { toast("Bộ nhớ tạm chưa có link. Trong Facebook: Chia sẻ → Sao chép liên kết."); return; }
+      link.value = m[0]; name.focus();
+    } catch { toast("Chưa đọc được bộ nhớ tạm. Giữ ngón tay vào ô link → Dán."); link.focus(); }
+  };
   f.querySelector("#rCancel").onclick = closeModal;
   f.onsubmit = e => {
     e.preventDefault();
