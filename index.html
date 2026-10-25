@@ -408,8 +408,10 @@ table.spend{width:100%;border-collapse:collapse;font-size:1.05rem}
 .recipe-filter[aria-pressed="true"]{background:var(--r5);color:#fff;box-shadow:0 8px 20px -8px var(--r5)}
 .recipe-filter[aria-pressed="true"] .cnt{background:#fff;color:var(--r5)}
 /* Costco & Springvale lists */
-.lists-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.2rem;align-items:start}
+.lists-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.2rem;align-items:start}
+@media (max-width:1200px){.lists-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:800px){.lists-grid{grid-template-columns:minmax(0,1fr)}}
+.blist-sub{font-size:.8rem;opacity:.92;margin-top:.15rem}
 .blist{border:2px solid var(--lc);border-radius:1rem;background:var(--surface);overflow:hidden;box-shadow:var(--shadow);min-width:0}
 .blist-head{display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.9rem 1.1rem;background:var(--lc);color:#fff}
 .blist-head h3{margin:0;font-family:var(--f-display);font-size:1.35rem;text-transform:uppercase;letter-spacing:.04em}
@@ -495,7 +497,7 @@ body{margin:0}img{max-width:100%}
       <button data-view="book"><span class="n-ico" style="--ic:var(--r2);--icfg:#fff"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3 2.5h8.5A1.5 1.5 0 0 1 13 4v9.5H4.5A1.5 1.5 0 0 1 3 12Z"/><path d="M3 12a1.5 1.5 0 0 1 1.5-1.5H13M6 5.5h4"/></svg></span><span class="n-t">Sổ món ăn</span><span class="n-s" id="navBook">&nbsp;</span></button>
       <button data-view="balance"><span class="n-ico" style="--ic:var(--r3);--icfg:var(--r-on-yellow)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 2a6 6 0 1 0 6 6H8Z"/><path d="M10 1.5A4.5 4.5 0 0 1 14.5 6H10Z"/></svg></span><span class="n-t">Cân bằng dinh dưỡng</span><span class="n-s" id="navBal">&nbsp;</span></button>
       <button data-view="money"><span class="n-ico" style="--ic:var(--r4);--icfg:#fff"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="1.5" y="3.5" width="13" height="9" rx="1.5"/><circle cx="8" cy="8" r="2"/><path d="M4 6v4M12 6v4"/></svg></span><span class="n-t">Chi tiêu</span><span class="n-s" id="navMoney">&nbsp;</span></button>
-      <button data-view="lists"><span class="n-ico" style="--ic:var(--r5);--icfg:#fff"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 2.5h2l1.6 7.5h7.4l1.5-5.5H4.3"/><circle cx="6.5" cy="13" r="1"/><circle cx="11.5" cy="13" r="1"/></svg></span><span class="n-t">Costco &amp; Springvale</span><span class="n-s" id="navLists">&nbsp;</span></button>
+      <button data-view="lists"><span class="n-ico" style="--ic:var(--r5);--icfg:#fff"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 2.5h2l1.6 7.5h7.4l1.5-5.5H4.3"/><circle cx="6.5" cy="13" r="1"/><circle cx="11.5" cy="13" r="1"/></svg></span><span class="n-t">Danh sách mua sắm</span><span class="n-s" id="navLists">&nbsp;</span></button>
     </nav>
     <div class="rail-foot">
       <span class="toolbar" style="gap:.6rem"><button class="rail-link" id="syncBtn">Đồng bộ</button><button class="rail-link" id="backupBtn">Sao lưu / nhập dữ liệu</button></span>
@@ -645,13 +647,13 @@ body{margin:0}img{max-width:100%}
       </div>
     </section>
 
-    <!-- Section 5: shopping lists for Costco and Springvale market -->
+    <!-- Section 5: shopping lists (forgotten items, Costco, Springvale market) -->
     <section class="view" id="v-lists" data-view="lists" aria-labelledby="h-lists" hidden>
       <div class="vhead">
         <div>
-          <p class="eyebrow">Danh sách mua sắm</p>
-          <h2 id="h-lists">Costco &amp; Springvale</h2>
-          <p class="hint">Ghi lại những thứ cần mua khi đi Costco hoặc chợ Springvale. Danh sách giữ nguyên cho tới khi bạn xoá.</p>
+          <p class="eyebrow">Mua sắm</p>
+          <h2 id="h-lists">Danh sách mua sắm</h2>
+          <p class="hint">Đồ quên mua cần mua thêm trong tuần, đồ mua ở Costco và chợ Springvale. Danh sách giữ nguyên cho tới khi bạn xoá.</p>
         </div>
       </div>
       <div class="lists-grid" id="listsGrid"></div>
@@ -1596,8 +1598,9 @@ function renderSpendSummary() {
 
 /* ---------- Render: Costco & Springvale lists ---------- */
 const BLISTS = [
-  {k: "costco", l: "Costco", c: "var(--r1)"},
-  {k: "springvale", l: "Chợ Springvale", c: "var(--r4)"}
+  {k: "extra", l: "Cần mua thêm", sub: "Đồ quên mua, tranh thủ mua trong tuần ở siêu thị gần nhà", c: "var(--r5)"},
+  {k: "costco", l: "Costco", sub: "Mua số lượng lớn, đồ dùng gia đình", c: "var(--r1)"},
+  {k: "springvale", l: "Chợ Springvale", sub: "Rau thơm, đồ Á, gia vị Việt", c: "var(--r4)"}
 ];
 const blist = k => Array.isArray((S.blists || {})[k]) ? S.blists[k] : [];
 function saveBlist(k, items) {
@@ -1615,7 +1618,7 @@ function renderLists() {
     const items = [...blist(b.k)].sort((x, y) => (x.done ? 1 : 0) - (y.done ? 1 : 0) || (x.at || 0) - (y.at || 0));
     const todo = items.filter(i => !i.done).length; left += todo;
     return `<div class="blist" style="--lc:${b.c}">
-      <div class="blist-head"><h3>${b.l}</h3><span>${items.length ? `còn ${todo}/${items.length}` : ""}</span></div>
+      <div class="blist-head"><div><h3>${b.l}</h3><div class="blist-sub">${b.sub}</div></div><span>${items.length ? `còn ${todo}/${items.length}` : ""}</span></div>
       <ul>${items.map(i => `<li class="bitem${i.done ? " done" : ""}"><input type="checkbox" id="b_${i.id}" data-bk="${b.k}" data-bid="${i.id}" ${i.done ? "checked" : ""} ${S.canWrite ? "" : "disabled"}><label for="b_${i.id}">${esc(i.name)}</label>${S.canWrite ? `<button class="x" data-bdel="${i.id}" data-bk="${b.k}" aria-label="Xoá ${esc(i.name)}">×</button>` : "<span></span>"}</li>`).join("")
         || `<li class="bempty">Chưa có gì. Gõ món cần mua vào ô bên dưới.</li>`}</ul>
       ${S.canWrite ? `<form class="badd" data-bk="${b.k}"><label class="sr" for="badd_${b.k}">Thêm vào ${b.l}</label><input id="badd_${b.k}" data-badd="${b.k}" placeholder="Thêm món cần mua…" autocomplete="off"><button class="btn">Thêm</button></form>` : ""}
