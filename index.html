@@ -407,6 +407,27 @@ table.spend{width:100%;border-collapse:collapse;font-size:1.05rem}
 .recipe-filter .cnt{display:inline-grid;place-items:center;min-width:1.7rem;height:1.5rem;padding:0 .4rem;border-radius:99px;background:var(--r5);color:#fff;font-size:.82rem}
 .recipe-filter[aria-pressed="true"]{background:var(--r5);color:#fff;box-shadow:0 8px 20px -8px var(--r5)}
 .recipe-filter[aria-pressed="true"] .cnt{background:#fff;color:var(--r5)}
+/* Costco & Springvale lists */
+.lists-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.2rem;align-items:start}
+@media (max-width:800px){.lists-grid{grid-template-columns:minmax(0,1fr)}}
+.blist{border:2px solid var(--lc);border-radius:1rem;background:var(--surface);overflow:hidden;box-shadow:var(--shadow);min-width:0}
+.blist-head{display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.9rem 1.1rem;background:var(--lc);color:#fff}
+.blist-head h3{margin:0;font-family:var(--f-display);font-size:1.35rem;text-transform:uppercase;letter-spacing:.04em}
+.blist-head span{font-weight:700;font-size:.9rem;white-space:nowrap}
+.blist ul{list-style:none;margin:0;padding:.5rem .6rem 0}
+.bitem{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:.65rem;align-items:center;padding:.55rem .5rem;border-bottom:1px solid var(--line-2);font-size:1.05rem}
+.bitem:last-child{border-bottom:0}
+.bitem input[type=checkbox]{width:1.25rem;height:1.25rem;accent-color:var(--lc)}
+.bitem label{min-width:0;cursor:pointer;overflow-wrap:anywhere}
+.bitem.done label{text-decoration:line-through;color:var(--ink-3)}
+.bitem .x{border:0;background:none;color:var(--ink-3);width:2rem;height:2rem;border-radius:.4rem;font-size:1.1rem}
+.bitem .x:hover{background:var(--line-2);color:var(--bad)}
+.badd{display:flex;gap:.4rem;padding:.7rem .9rem}
+.badd input{flex:1;min-width:0;min-height:2.6rem;border:2px dashed var(--line);border-radius:.6rem;background:transparent;padding:0 .8rem;font-size:1rem}
+.badd input:focus{border-style:solid;border-color:var(--lc);outline:none}
+.badd button{background:var(--lc);border-color:var(--lc);color:#fff}
+.blist-foot{display:flex;flex-wrap:wrap;gap:.4rem;justify-content:space-between;padding:0 .9rem .9rem}
+.bempty{padding:.8rem .5rem;color:var(--ink-3);font-size:.95rem}
 .rail-link{border:0;background:none;color:var(--rail-2);font-size:.78rem;text-decoration:underline;padding:0;cursor:pointer}
 .rail-link:hover{color:var(--rail-ink)}
 .sync-ok{color:var(--good);font-weight:600}.sync-bad{color:var(--bad);font-weight:600}
@@ -474,6 +495,7 @@ body{margin:0}img{max-width:100%}
       <button data-view="book"><span class="n-ico" style="--ic:var(--r2);--icfg:#fff"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3 2.5h8.5A1.5 1.5 0 0 1 13 4v9.5H4.5A1.5 1.5 0 0 1 3 12Z"/><path d="M3 12a1.5 1.5 0 0 1 1.5-1.5H13M6 5.5h4"/></svg></span><span class="n-t">Sổ món ăn</span><span class="n-s" id="navBook">&nbsp;</span></button>
       <button data-view="balance"><span class="n-ico" style="--ic:var(--r3);--icfg:var(--r-on-yellow)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 2a6 6 0 1 0 6 6H8Z"/><path d="M10 1.5A4.5 4.5 0 0 1 14.5 6H10Z"/></svg></span><span class="n-t">Cân bằng dinh dưỡng</span><span class="n-s" id="navBal">&nbsp;</span></button>
       <button data-view="money"><span class="n-ico" style="--ic:var(--r4);--icfg:#fff"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="1.5" y="3.5" width="13" height="9" rx="1.5"/><circle cx="8" cy="8" r="2"/><path d="M4 6v4M12 6v4"/></svg></span><span class="n-t">Chi tiêu</span><span class="n-s" id="navMoney">&nbsp;</span></button>
+      <button data-view="lists"><span class="n-ico" style="--ic:var(--r5);--icfg:#fff"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 2.5h2l1.6 7.5h7.4l1.5-5.5H4.3"/><circle cx="6.5" cy="13" r="1"/><circle cx="11.5" cy="13" r="1"/></svg></span><span class="n-t">Costco &amp; Springvale</span><span class="n-s" id="navLists">&nbsp;</span></button>
     </nav>
     <div class="rail-foot">
       <span class="toolbar" style="gap:.6rem"><button class="rail-link" id="syncBtn">Đồng bộ</button><button class="rail-link" id="backupBtn">Sao lưu / nhập dữ liệu</button></span>
@@ -621,6 +643,18 @@ body{margin:0}img{max-width:100%}
           </div>
         </div>
       </div>
+    </section>
+
+    <!-- Section 5: shopping lists for Costco and Springvale market -->
+    <section class="view" id="v-lists" data-view="lists" aria-labelledby="h-lists" hidden>
+      <div class="vhead">
+        <div>
+          <p class="eyebrow">Danh sách mua sắm</p>
+          <h2 id="h-lists">Costco &amp; Springvale</h2>
+          <p class="hint">Ghi lại những thứ cần mua khi đi Costco hoặc chợ Springvale. Danh sách giữ nguyên cho tới khi bạn xoá.</p>
+        </div>
+      </div>
+      <div class="lists-grid" id="listsGrid"></div>
     </section>
   </main>
 </div>
@@ -812,6 +846,8 @@ function cloudStore(db) {
     patchWeek: (id, patch, exists) => run("weeks/"+id, () => exists ? doc("weeks/"+id).update(patch) : doc("weeks/"+id).set(patch)),
     delWeek: id => run("weeks/"+id, () => doc("weeks/"+id).delete()),
     setSettings: data => run("settings/shopping", () => doc("settings/shopping").set(data)),
+    subscribeLists(onLists) { doc("settings/stores").onSnapshot(s => onLists(s.exists ? s.data() : null), () => {}); },
+    setLists: data => run("settings/stores", () => doc("settings/stores").set(data)),
     subscribeMoney(onSpend) {
       const err = e => { if (e && e.code === "revoked") setMode("readonly"); };
       db.collection("spend").onSnapshot(s => onSpend(s.docs.map(d => ({id:d.id, ...d.data()}))), err);
@@ -827,9 +863,9 @@ const DATA_KEY = "tnag:data:v2";
 function ghStore() {
   let data = {dishes: {}, weeks: {}, spend: {}, settings: {}, tomb: {}};
   try { const raw = lsGet(DATA_KEY); if (raw) data = {...data, ...JSON.parse(raw)}; } catch {}
-  let onD = () => {}, onW = () => {}, onS = () => {}, onE = () => {};
+  let onD = () => {}, onW = () => {}, onS = () => {}, onE = () => {}, onL = () => {};
   const rows = c => Object.entries(data[c]).map(([id, v]) => ({id, ...v}));
-  const emit = () => { onD(rows("dishes")); onW(rows("weeks")); onS(data.settings.shopping || null); onE(rows("spend")); };
+  const emit = () => { onD(rows("dishes")); onW(rows("weeks")); onS(data.settings.shopping || null); onE(rows("spend")); onL(data.settings.stores || null); };
   const save = () => { lsSet(DATA_KEY, JSON.stringify(data)); Sync.soon(); };
   const put = (c, id, v) => { data[c][id] = {...v, _t: Date.now()}; delete data.tomb[c + "/" + id]; };
   const del = (c, id) => { delete data[c][id]; data.tomb[c + "/" + id] = Date.now(); };
@@ -838,6 +874,8 @@ function ghStore() {
     mode: "local",
     subscribe(a, b, c) { onD = a; onW = b; onS = c; onD(rows("dishes")); onW(rows("weeks")); onS(data.settings.shopping || null); },
     subscribeMoney(e) { onE = e; onE(rows("spend")); },
+    subscribeLists(cb) { onL = cb; onL(data.settings.stores || null); },
+    setLists: v => done(() => put("settings", "stores", v), () => onL(data.settings.stores)),
     setDish: (id, v) => done(() => put("dishes", id, v), () => onD(rows("dishes"))),
     patchDish: (id, p) => done(() => put("dishes", id, {...data.dishes[id], ...p}), () => onD(rows("dishes"))),
     delDish: id => done(() => del("dishes", id), () => onD(rows("dishes"))),
@@ -1031,7 +1069,7 @@ function localStore() {
   const KEY = "tuan-nay-an-gi:v1";
   let data = {dishes:{}, weeks:{}, settings:null};
   try { const raw = lsGet(KEY); if (raw) data = {settings:null, ...JSON.parse(raw)}; } catch {}
-  let onD = () => {}, onW = () => {}, onS = () => {}, onE = () => {};
+  let onD = () => {}, onW = () => {}, onS = () => {}, onE = () => {}, onL = () => {};
   const emitE = () => onE(Object.entries(data.spend || {}).map(([id, v]) => ({id, ...v})));
   const save = () => lsSet(KEY, JSON.stringify(data));
   const emitD = () => onD(Object.entries(data.dishes).map(([id, v]) => ({id, ...v})));
@@ -1047,6 +1085,8 @@ function localStore() {
     patchWeek: (id, p) => done(() => { data.weeks[id] = deepMerge(data.weeks[id], p); emitW(); }),
     delWeek: id => done(() => { delete data.weeks[id]; emitW(); }),
     setSettings: v => done(() => { data.settings = v; onS(v); }),
+    subscribeLists(cb) { onL = cb; onL(data.stores || null); },
+    setLists: v => done(() => { data.stores = v; onL(v); }),
     subscribeMoney(a) { onE = a; data.spend = data.spend || {}; emitE(); },
     setSpend: (id, amount) => done(() => { data.spend[id] = {amount, updatedAt: Date.now()}; emitE(); }),
     delSpend: id => done(() => { delete data.spend[id]; emitE(); })
@@ -1072,7 +1112,7 @@ async function boot() {
   const hash = (location.hash || "").slice(1);
   if (hash === "cong-thuc") { S.view = "book"; setTimeout(() => openRecipe(""), 0); }
   const saved = hash === "cong-thuc" ? "book" : hash || lsGet("tnag:view");
-  if (["menu","book","balance","money"].includes(saved)) S.view = saved;
+  if (["menu","book","balance","money","lists"].includes(saved)) S.view = saved;
   showView(S.view, false);
   loadCache();   // show the last known menu right away while the live data loads
   renderAll();
@@ -1091,6 +1131,7 @@ async function boot() {
     S.staples = settings && Array.isArray(settings.staples) ? settings.staples : null; renderShop(); saveCache();
   });
   store.subscribeMoney(list => { S.spend = new Map(list.filter(x => typeof x.amount === "number").map(x => [x.id, x.amount])); renderMoney(); renderHeader(); saveCache(); });
+  store.subscribeLists(d => { S.blists = d && typeof d === "object" ? d : {}; renderLists(); });
   setMode(store.mode);
   Sync.start();
   // Sync code handed over by the QR code: …/WeeklyFood/#sync=<code> (removed from the address right away)
@@ -1553,7 +1594,42 @@ function renderSpendSummary() {
   $("#navMoney").textContent = `Tháng ${now.getMonth() + 1}: ${money(Math.round((months.get(curKey) || {t: 0}).t))}`;
 }
 
-function renderAll() { renderHeader(); renderWeek(); renderShop(); renderLibrary(); renderStats(); renderMoney(); }
+/* ---------- Render: Costco & Springvale lists ---------- */
+const BLISTS = [
+  {k: "costco", l: "Costco", c: "var(--r1)"},
+  {k: "springvale", l: "Chợ Springvale", c: "var(--r4)"}
+];
+const blist = k => Array.isArray((S.blists || {})[k]) ? S.blists[k] : [];
+function saveBlist(k, items) {
+  if (!S.canWrite) return;
+  const next = {...(S.blists || {}), [k]: items};
+  delete next.id; delete next._t;
+  S.blists = next;
+  W(store.setLists(next)); renderLists();
+}
+function renderLists() {
+  const grid = $("#listsGrid"); if (!grid) return;
+  const focusK = document.activeElement && document.activeElement.dataset && document.activeElement.dataset.badd;
+  let left = 0;
+  grid.innerHTML = BLISTS.map(b => {
+    const items = [...blist(b.k)].sort((x, y) => (x.done ? 1 : 0) - (y.done ? 1 : 0) || (x.at || 0) - (y.at || 0));
+    const todo = items.filter(i => !i.done).length; left += todo;
+    return `<div class="blist" style="--lc:${b.c}">
+      <div class="blist-head"><h3>${b.l}</h3><span>${items.length ? `còn ${todo}/${items.length}` : ""}</span></div>
+      <ul>${items.map(i => `<li class="bitem${i.done ? " done" : ""}"><input type="checkbox" id="b_${i.id}" data-bk="${b.k}" data-bid="${i.id}" ${i.done ? "checked" : ""} ${S.canWrite ? "" : "disabled"}><label for="b_${i.id}">${esc(i.name)}</label>${S.canWrite ? `<button class="x" data-bdel="${i.id}" data-bk="${b.k}" aria-label="Xoá ${esc(i.name)}">×</button>` : "<span></span>"}</li>`).join("")
+        || `<li class="bempty">Chưa có gì. Gõ món cần mua vào ô bên dưới.</li>`}</ul>
+      ${S.canWrite ? `<form class="badd" data-bk="${b.k}"><label class="sr" for="badd_${b.k}">Thêm vào ${b.l}</label><input id="badd_${b.k}" data-badd="${b.k}" placeholder="Thêm món cần mua…" autocomplete="off"><button class="btn">Thêm</button></form>` : ""}
+      <div class="blist-foot">
+        <button class="btn ghost" data-bcopy="${b.k}" ${items.length ? "" : "disabled"}>Sao chép</button>
+        ${S.canWrite ? `<button class="btn ghost danger" data-bclear="${b.k}" ${items.some(i => i.done) ? "" : "disabled"}>Xoá các mục đã mua</button>` : ""}
+      </div>
+    </div>`;
+  }).join("");
+  if (focusK) { const inp = document.getElementById("badd_" + focusK); if (inp) inp.focus(); }
+  const nav = $("#navLists"); if (nav) nav.textContent = left ? `Còn ${left} món cần mua` : "Chưa có món cần mua";
+}
+
+function renderAll() { renderHeader(); renderWeek(); renderShop(); renderLibrary(); renderStats(); renderMoney(); renderLists(); }
 
 /* ---------- Actions ---------- */
 function assign(day, slot, dishId) {
@@ -2095,6 +2171,31 @@ libWrap.addEventListener("click", e => {
 $("#subnav").addEventListener("click", e => {
   const b = e.target.closest("[data-tab]"); if (!b) return;
   S.lib.group = b.dataset.tab; lsSet("tnag:tab", S.lib.group); renderLibrary();
+});
+const listsGrid = $("#listsGrid");
+listsGrid.addEventListener("submit", e => {
+  e.preventDefault();
+  const k = e.target.dataset.bk, inp = e.target.querySelector("input"), name = inp.value.trim();
+  if (!k || !name) return;
+  if (blist(k).some(i => !i.done && norm(i.name) === norm(name))) { toast(`“${name}” đã có trong danh sách.`); inp.value = ""; return; }
+  saveBlist(k, [...blist(k), {id: uid(), name, done: false, at: Date.now()}]);
+  const again = document.getElementById("badd_" + k); if (again) { again.value = ""; again.focus(); }
+});
+listsGrid.addEventListener("change", e => {
+  const {bk, bid} = e.target.dataset; if (!bk || !bid) return;
+  saveBlist(bk, blist(bk).map(i => i.id === bid ? {...i, done: e.target.checked} : i));
+});
+listsGrid.addEventListener("click", e => {
+  const del = e.target.closest("[data-bdel]");
+  if (del) { saveBlist(del.dataset.bk, blist(del.dataset.bk).filter(i => i.id !== del.dataset.bdel)); return; }
+  const clr = e.target.closest("[data-bclear]");
+  if (clr) { const k = clr.dataset.bclear, n = blist(k).filter(i => i.done).length; saveBlist(k, blist(k).filter(i => !i.done)); toast(`Đã xoá ${n} mục đã mua.`); return; }
+  const cp = e.target.closest("[data-bcopy]");
+  if (cp) {
+    const b = BLISTS.find(x => x.k === cp.dataset.bcopy);
+    const text = `${b.l}:\n` + blist(b.k).filter(i => !i.done).map(i => `- ${i.name}`).join("\n");
+    try { navigator.clipboard.writeText(text).then(() => toast("Đã sao chép danh sách."), () => toast("Trình duyệt không cho sao chép.")); } catch { toast("Trình duyệt không cho sao chép."); }
+  }
 });
 $("#libSearch").addEventListener("input", e => { S.lib.q = e.target.value; renderLibrary(); });
 $("#libSort").addEventListener("change", e => { S.lib.sort = e.target.value; renderLibrary(); });
