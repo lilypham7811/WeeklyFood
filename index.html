@@ -410,6 +410,9 @@ table.spend{width:100%;border-collapse:collapse;font-size:1.05rem}
 .rail-link{border:0;background:none;color:var(--rail-2);font-size:.78rem;text-decoration:underline;padding:0;cursor:pointer}
 .rail-link:hover{color:var(--rail-ink)}
 .sync-ok{color:var(--good);font-weight:600}.sync-bad{color:var(--bad);font-weight:600}
+@media (max-width:900px){.rail-foot{display:flex!important;flex-direction:row;flex-wrap:wrap;align-items:center;gap:.4rem 1rem;padding:0 .2rem;font-size:.8rem}.rail-foot #today{display:none}.rail-link{font-size:.85rem}}
+.qr-box{display:grid;place-items:center;gap:.5rem;padding:.8rem;border:1px dashed var(--line);border-radius:.8rem;background:#fff}
+.qr-box canvas,.qr-box img{width:220px;height:220px;image-rendering:pixelated}
 /* Rainbow accents */
 .nav .n-ico{background:var(--ic)!important;color:var(--icfg)!important}
 .kpi{border-top:5px solid var(--pc)!important}
@@ -974,7 +977,8 @@ function openSync() {
       <p class="footnote" style="font-size:.92rem">Dữ liệu được lưu vào kho GitHub riêng tư <b>shadow-english-sync</b> (tệp <b>nha-minh-an-gi.json</b>), dùng chung <b>mã đồng bộ</b> với app LearningEnglish. Chỉ bạn xem được kho này.</p>
       <p id="syncState" class="${Sync.state.error ? "sync-bad" : has ? "sync-ok" : ""}">${!has ? "Chưa có mã đồng bộ trên máy này." : Sync.state.error ? esc(Sync.state.error) : fromLE ? "✓ Đang dùng mã đồng bộ của LearningEnglish." : "✓ Đã có mã đồng bộ."}</p>
       <label>Mã đồng bộ (GitHub token)<input class="input" id="syncTok" type="password" autocomplete="off" placeholder="${has ? "Để trống nếu không đổi" : "Dán mã đồng bộ (bắt đầu bằng github_pat_…)"}"></label>
-      <p class="footnote">Trên iPhone: mở app LearningEnglish → <b>Cài đặt</b> → chép mã đồng bộ, rồi dán vào đây một lần.</p>
+      ${has ? `<div class="toolbar"><button type="button" class="btn" id="syncCopy">Chép mã đồng bộ</button><button type="button" class="btn" id="syncQr">Mã QR kết nối iPhone</button></div>
+      <div id="qrWrap" hidden></div>` : `<p class="footnote">Trên iPhone: trên máy tính, mở app này → <b>Đồng bộ</b> → <b>Mã QR kết nối iPhone</b>, rồi quét bằng camera iPhone.</p>`}
       <p class="footnote" id="syncHist"></p>
     </div>
     <div class="sheet-foot"><button type="button" class="btn" id="syncNowBtn">Đồng bộ ngay</button><div class="toolbar"><button type="button" class="btn ghost" id="syncClose">Đóng</button><button class="btn primary" type="submit">Lưu mã</button></div></div></form>`;
@@ -982,7 +986,30 @@ function openSync() {
   $("#syncClose").onclick = closeModal;
   $("#syncNowBtn").onclick = () => { Sync.now(); toast("Đang đồng bộ…"); };
   if (has) Sync.historyUrl().then(u => { $("#syncHist").innerHTML = `<a href="${esc(u)}" target="_blank" rel="noopener">Xem lịch sử các lần lưu trên GitHub ↗</a>`; }).catch(() => {});
+  if (has) {
+    $("#syncCopy").onclick = async () => {
+      try { await navigator.clipboard.writeText(Sync.token()); toast("Đã chép mã. Dán vào ô mã đồng bộ của app trên iPhone."); }
+      catch { toast("Trình duyệt chưa cho chép. Thử lại."); }
+    };
+    $("#syncQr").onclick = () => showQr(`${location.origin}${location.pathname}#sync=${encodeURIComponent(Sync.token())}`);
+  }
   $("#syncForm").onsubmit = e => { e.preventDefault(); const v = $("#syncTok").value.trim(); if (v) { Sync.setToken(v); toast("Đã lưu mã đồng bộ."); } closeModal(); };
+}
+
+/* QR code with the app address + sync code, so the iPhone camera can connect the phone in one scan. */
+function loadQrLib() {
+  return window.qrcode ? Promise.resolve() : new Promise((ok, bad) => {
+    const sc = document.createElement("script"); sc.src = "https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js";
+    sc.onload = ok; sc.onerror = bad; document.head.appendChild(sc);
+  });
+}
+async function showQr(text) {
+  const box = $("#qrWrap"); box.hidden = false; box.innerHTML = `<p class="footnote">Đang tạo mã QR…</p>`;
+  try {
+    await loadQrLib();
+    const qr = window.qrcode(0, "M"); qr.addData(text); qr.make();
+    box.innerHTML = `<div class="qr-box">${qr.createImgTag(6, 12)}<p class="footnote" style="text-align:center;max-width:22rem">Mở <b>Camera</b> trên iPhone, hướng vào mã này, bấm vào đường link hiện ra. App mở trong Safari và tự kết nối.<br><b>Mã này như chìa khoá: đừng chụp gửi cho ai.</b></p></div>`;
+  } catch { box.innerHTML = `<p class="footnote sync-bad">Chưa tạo được mã QR (mất mạng?). Dùng nút “Chép mã đồng bộ”.</p>`; }
 }
 
 function deepMerge(a, b) {
@@ -1056,6 +1083,13 @@ async function boot() {
   store.subscribeMoney(list => { S.spend = new Map(list.filter(x => typeof x.amount === "number").map(x => [x.id, x.amount])); renderMoney(); renderHeader(); saveCache(); });
   setMode(store.mode);
   Sync.start();
+  // Sync code handed over by the QR code: …/WeeklyFood/#sync=<code> (removed from the address right away)
+  const hsync = (location.hash || "").match(/^#sync=(.+)$/);
+  if (hsync) {
+    history.replaceState(null, "", location.pathname);
+    Sync.setToken(decodeURIComponent(hsync[1]));
+    setTimeout(() => { openSync(); toast("Đã kết nối đồng bộ trên máy này."); }, 300);
+  }
   // Links handed over by an iPhone Shortcut: …/WeeklyFood/#share=<link>
   const hs = (location.hash || "").match(/^#share=(.+)$/);
   if (hs) { history.replaceState(null, "", location.pathname); showView("book", false); setTimeout(() => openRecipe(decodeURIComponent(hs[1])), 0); }
