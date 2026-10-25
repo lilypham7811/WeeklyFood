@@ -970,6 +970,7 @@ const Sync = (() => {
 })();
 
 function openSync() {
+  const isPhone = /iPhone|iPad|Android/i.test(navigator.userAgent);
   const has = !!Sync.token(), fromLE = !!(lsGet("se_syncToken") || "").replace(/"/g, "").trim() && !lsGet("tnag:syncToken");
   modal.innerHTML = `<form class="sheet" id="syncForm" role="dialog" aria-modal="true" aria-labelledby="sT">
     <div class="sheet-head"><h3 id="sT">Đồng bộ máy tính ↔ iPhone</h3></div>
@@ -978,7 +979,10 @@ function openSync() {
       <p id="syncState" class="${Sync.state.error ? "sync-bad" : has ? "sync-ok" : ""}">${!has ? "Chưa có mã đồng bộ trên máy này." : Sync.state.error ? esc(Sync.state.error) : fromLE ? "✓ Đang dùng mã đồng bộ của LearningEnglish." : "✓ Đã có mã đồng bộ."}</p>
       <label>Mã đồng bộ (GitHub token)<input class="input" id="syncTok" type="password" autocomplete="off" placeholder="${has ? "Để trống nếu không đổi" : "Dán mã đồng bộ (bắt đầu bằng github_pat_…)"}"></label>
       ${has ? `<div class="toolbar"><button type="button" class="btn" id="syncCopy">Chép mã đồng bộ</button><button type="button" class="btn" id="syncQr">Mã QR kết nối iPhone</button></div>
-      <div id="qrWrap" hidden></div>` : `<p class="footnote">Trên iPhone: trên máy tính, mở app này → <b>Đồng bộ</b> → <b>Mã QR kết nối iPhone</b>, rồi quét bằng camera iPhone.</p>`}
+      <div id="qrWrap" hidden></div>
+      ${isPhone ? `<p class="footnote">Dùng app trên <b>màn hình chính</b>? Bấm <b>Chép mã đồng bộ</b> ở đây, mở app trên màn hình chính → <b>Đồng bộ</b> → <b>📋 Dán mã đã chép</b>.</p>` : ""}` :
+      `<button type="button" class="btn primary" id="syncPaste" style="justify-content:center">📋 Dán mã đã chép</button>
+      <p class="footnote">${isPhone ? "Lấy mã: trên máy tính, mở app → <b>Đồng bộ</b> → <b>Mã QR kết nối iPhone</b> → quét bằng Camera. Safari mở app, bấm <b>Đồng bộ</b> → <b>Chép mã đồng bộ</b>, rồi quay lại đây bấm <b>📋 Dán mã đã chép</b>." : "Hoặc dán mã đồng bộ (bắt đầu bằng github_pat_…) vào ô ở trên."}</p>`}
       <p class="footnote" id="syncHist"></p>
     </div>
     <div class="sheet-foot"><button type="button" class="btn" id="syncNowBtn">Đồng bộ ngay</button><div class="toolbar"><button type="button" class="btn ghost" id="syncClose">Đóng</button><button class="btn primary" type="submit">Lưu mã</button></div></div></form>`;
@@ -986,6 +990,12 @@ function openSync() {
   $("#syncClose").onclick = closeModal;
   $("#syncNowBtn").onclick = () => { Sync.now(); toast("Đang đồng bộ…"); };
   if (has) Sync.historyUrl().then(u => { $("#syncHist").innerHTML = `<a href="${esc(u)}" target="_blank" rel="noopener">Xem lịch sử các lần lưu trên GitHub ↗</a>`; }).catch(() => {});
+  if (!has) $("#syncPaste").onclick = async () => {
+    let v = "";
+    try { v = (await navigator.clipboard.readText() || "").trim(); } catch {}
+    if (!/^(github_pat_|ghp_)[A-Za-z0-9_]{20,}$/.test(v)) { toast(v ? "Bộ nhớ tạm không phải mã đồng bộ. Chép lại mã rồi thử lại." : "Chưa đọc được bộ nhớ tạm. Giữ ngón tay vào ô mã → Dán."); $("#syncTok").focus(); return; }
+    Sync.setToken(v); closeModal(); toast("Đã kết nối đồng bộ. Dữ liệu sẽ hiện sau vài giây.");
+  };
   if (has) {
     $("#syncCopy").onclick = async () => {
       try { await navigator.clipboard.writeText(Sync.token()); toast("Đã chép mã. Dán vào ô mã đồng bộ của app trên iPhone."); }
@@ -1090,6 +1100,8 @@ async function boot() {
     Sync.setToken(decodeURIComponent(hsync[1]));
     setTimeout(() => { openSync(); toast("Đã kết nối đồng bộ trên máy này."); }, 300);
   }
+  const standalone = window.navigator.standalone || matchMedia("(display-mode: standalone)").matches;
+  if (!hsync && standalone && !Sync.token()) setTimeout(openSync, 600);
   // Links handed over by an iPhone Shortcut: …/WeeklyFood/#share=<link>
   const hs = (location.hash || "").match(/^#share=(.+)$/);
   if (hs) { history.replaceState(null, "", location.pathname); showView("book", false); setTimeout(() => openRecipe(decodeURIComponent(hs[1])), 0); }
