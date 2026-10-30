@@ -653,7 +653,7 @@ body{margin:0}img{max-width:100%}
         <div>
           <p class="eyebrow">Mua sắm</p>
           <h2 id="h-lists">Danh sách mua sắm</h2>
-          <p class="hint">Đồ quên mua cần mua thêm trong tuần, đồ mua ở Costco và chợ Springvale. Danh sách giữ nguyên cho tới khi bạn xoá.</p>
+          <p class="hint">Đồ quên mua cần mua thêm trong tuần, đồ mua ở Costco, chợ Springvale, Amazon và việc cần làm. Danh sách giữ nguyên cho tới khi bạn xoá.</p>
         </div>
       </div>
       <div class="lists-grid" id="listsGrid"></div>
@@ -1600,7 +1600,9 @@ function renderSpendSummary() {
 const BLISTS = [
   {k: "extra", l: "Cần mua thêm", sub: "Đồ quên mua, tranh thủ mua trong tuần ở siêu thị gần nhà", c: "var(--r5)"},
   {k: "costco", l: "Costco", sub: "Mua số lượng lớn, đồ dùng gia đình", c: "var(--r1)"},
-  {k: "springvale", l: "Chợ Springvale", sub: "Rau thơm, đồ Á, gia vị Việt", c: "var(--r4)"}
+  {k: "springvale", l: "Chợ Springvale", sub: "Rau thơm, đồ Á, gia vị Việt", c: "var(--r4)"},
+  {k: "amazon", l: "Amazon", sub: "Đồ đặt mua online", c: "var(--r2)"},
+  {k: "todo", l: "To do list", sub: "Việc cần làm", c: "var(--r6)", todo: true}
 ];
 const blist = k => Array.isArray((S.blists || {})[k]) ? S.blists[k] : [];
 function saveBlist(k, items) {
@@ -1613,23 +1615,23 @@ function saveBlist(k, items) {
 function renderLists() {
   const grid = $("#listsGrid"); if (!grid) return;
   const focusK = document.activeElement && document.activeElement.dataset && document.activeElement.dataset.badd;
-  let left = 0;
+  let left = 0, tasks = 0;
   grid.innerHTML = BLISTS.map(b => {
     const items = [...blist(b.k)].sort((x, y) => (x.done ? 1 : 0) - (y.done ? 1 : 0) || (x.at || 0) - (y.at || 0));
-    const todo = items.filter(i => !i.done).length; left += todo;
+    const todo = items.filter(i => !i.done).length; if (b.todo) tasks += todo; else left += todo;
     return `<div class="blist" style="--lc:${b.c}">
       <div class="blist-head"><div><h3>${b.l}</h3><div class="blist-sub">${b.sub}</div></div><span>${items.length ? `còn ${todo}/${items.length}` : ""}</span></div>
       <ul>${items.map(i => `<li class="bitem${i.done ? " done" : ""}"><input type="checkbox" id="b_${i.id}" data-bk="${b.k}" data-bid="${i.id}" ${i.done ? "checked" : ""} ${S.canWrite ? "" : "disabled"}><label for="b_${i.id}">${esc(i.name)}</label>${S.canWrite ? `<button class="x" data-bdel="${i.id}" data-bk="${b.k}" aria-label="Xoá ${esc(i.name)}">×</button>` : "<span></span>"}</li>`).join("")
-        || `<li class="bempty">Chưa có gì. Gõ món cần mua vào ô bên dưới.</li>`}</ul>
-      ${S.canWrite ? `<form class="badd" data-bk="${b.k}"><label class="sr" for="badd_${b.k}">Thêm vào ${b.l}</label><input id="badd_${b.k}" data-badd="${b.k}" placeholder="Thêm món cần mua…" autocomplete="off"><button class="btn">Thêm</button></form>` : ""}
+        || `<li class="bempty">Chưa có gì. Gõ ${b.todo ? "việc cần làm" : "món cần mua"} vào ô bên dưới.</li>`}</ul>
+      ${S.canWrite ? `<form class="badd" data-bk="${b.k}"><label class="sr" for="badd_${b.k}">Thêm vào ${b.l}</label><input id="badd_${b.k}" data-badd="${b.k}" placeholder="${b.todo ? "Thêm việc cần làm…" : "Thêm món cần mua…"}" autocomplete="off"><button class="btn">Thêm</button></form>` : ""}
       <div class="blist-foot">
         <button class="btn ghost" data-bcopy="${b.k}" ${items.length ? "" : "disabled"}>Sao chép</button>
-        ${S.canWrite ? `<button class="btn ghost danger" data-bclear="${b.k}" ${items.some(i => i.done) ? "" : "disabled"}>Xoá các mục đã mua</button>` : ""}
+        ${S.canWrite ? `<button class="btn ghost danger" data-bclear="${b.k}" ${items.some(i => i.done) ? "" : "disabled"}>${b.todo ? "Xoá việc đã xong" : "Xoá các mục đã mua"}</button>` : ""}
       </div>
     </div>`;
   }).join("");
   if (focusK) { const inp = document.getElementById("badd_" + focusK); if (inp) inp.focus(); }
-  const nav = $("#navLists"); if (nav) nav.textContent = left ? `Còn ${left} món cần mua` : "Chưa có món cần mua";
+  const nav = $("#navLists"); if (nav) nav.textContent = [left ? `${left} món cần mua` : "", tasks ? `${tasks} việc cần làm` : ""].filter(Boolean).join(" · ") || "Chưa có gì cần mua";
 }
 
 function renderAll() { renderHeader(); renderWeek(); renderShop(); renderLibrary(); renderStats(); renderMoney(); renderLists(); }
@@ -2192,7 +2194,7 @@ listsGrid.addEventListener("click", e => {
   const del = e.target.closest("[data-bdel]");
   if (del) { saveBlist(del.dataset.bk, blist(del.dataset.bk).filter(i => i.id !== del.dataset.bdel)); return; }
   const clr = e.target.closest("[data-bclear]");
-  if (clr) { const k = clr.dataset.bclear, n = blist(k).filter(i => i.done).length; saveBlist(k, blist(k).filter(i => !i.done)); toast(`Đã xoá ${n} mục đã mua.`); return; }
+  if (clr) { const k = clr.dataset.bclear, n = blist(k).filter(i => i.done).length; saveBlist(k, blist(k).filter(i => !i.done)); toast(k === "todo" ? `Đã xoá ${n} việc đã xong.` : `Đã xoá ${n} mục đã mua.`); return; }
   const cp = e.target.closest("[data-bcopy]");
   if (cp) {
     const b = BLISTS.find(x => x.k === cp.dataset.bcopy);
