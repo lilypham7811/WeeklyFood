@@ -426,7 +426,7 @@ table.spend{width:100%;border-collapse:collapse;font-size:1.05rem}
 .bitem .x:hover{background:var(--line-2);color:var(--bad)}
 .bitem .x[data-bedit]:hover{color:var(--lc)}
 .bacts{display:flex;gap:.1rem}
-.bedit-in{min-width:0;width:100%;min-height:2.2rem;border:2px solid var(--lc);border-radius:.45rem;padding:0 .6rem;font:inherit;background:var(--surface);color:var(--ink)}
+.bedit-in{min-width:0;width:100%;min-height:2.4rem;border:2px solid var(--lc);border-radius:.45rem;padding:.4rem .6rem;font:inherit;font-size:max(1rem,16px);line-height:1.35;background:var(--surface);color:var(--ink);resize:none;overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere}
 .badd{display:flex;gap:.4rem;padding:.7rem .9rem}
 .badd input{flex:1;min-width:0;min-height:2.6rem;border:2px dashed var(--line);border-radius:.6rem;background:transparent;padding:0 .8rem;font-size:1rem}
 .badd input:focus{border-style:solid;border-color:var(--lc);outline:none}
@@ -1625,7 +1625,7 @@ function renderLists() {
     return `<div class="blist" style="--lc:${b.c}">
       <div class="blist-head"><div><h3>${b.l}</h3><div class="blist-sub">${b.sub}</div></div><span>${items.length ? `còn ${todo}/${items.length}` : ""}</span></div>
       <ul>${items.map(i => `<li class="bitem${i.done ? " done" : ""}"><input type="checkbox" id="b_${i.id}" data-bk="${b.k}" data-bid="${i.id}" ${i.done ? "checked" : ""} ${S.canWrite ? "" : "disabled"}>${S.bedit && S.bedit.k === b.k && S.bedit.id === i.id
-        ? `<input class="bedit-in" data-bedit-in="${i.id}" data-bk="${b.k}" value="${esc(i.name)}" aria-label="Sửa tên món">`
+        ? `<textarea class="bedit-in" rows="1" data-bedit-in="${i.id}" data-bk="${b.k}" aria-label="Sửa tên món" enterkeyhint="done">${esc(i.name)}</textarea>`
         : `<label for="b_${i.id}">${esc(i.name)}</label>`}${S.canWrite ? `<span class="bacts"><button class="x" data-bedit="${i.id}" data-bk="${b.k}" aria-label="Sửa ${esc(i.name)}" title="Sửa">✎</button><button class="x" data-bdel="${i.id}" data-bk="${b.k}" aria-label="Xoá ${esc(i.name)}" title="Xoá">×</button></span>` : "<span></span>"}</li>`).join("")
         || `<li class="bempty">Chưa có gì. Gõ ${b.todo ? "việc cần làm" : "món cần mua"} vào ô bên dưới.</li>`}</ul>
       ${S.canWrite ? `<form class="badd" data-bk="${b.k}"><label class="sr" for="badd_${b.k}">Thêm vào ${b.l}</label><input id="badd_${b.k}" data-badd="${b.k}" placeholder="${b.todo ? "Thêm việc cần làm…" : "Thêm món cần mua…"}" autocomplete="off"><button class="btn">Thêm</button></form>` : ""}
@@ -1636,7 +1636,12 @@ function renderLists() {
     </div>`;
   }).join("");
   const ed = grid.querySelector("[data-bedit-in]");
-  if (ed) { ed.focus(); ed.select(); }
+  if (ed) {
+    // Cursor at the end (easy to add words on a phone); the box grows with the text.
+    const fit = () => { ed.style.height = "auto"; ed.style.height = ed.scrollHeight + "px"; };
+    fit(); ed.addEventListener("input", fit);
+    ed.focus(); const n = ed.value.length; ed.setSelectionRange(n, n);
+  }
   else if (focusK) { const inp = document.getElementById("badd_" + focusK); if (inp) inp.focus(); }
   const nav = $("#navLists"); if (nav) nav.textContent = [left ? `${left} món cần mua` : "", tasks ? `${tasks} việc cần làm` : ""].filter(Boolean).join(" · ") || "Chưa có gì cần mua";
 }
@@ -2195,7 +2200,7 @@ listsGrid.addEventListener("submit", e => {
 });
 function saveBedit(inp) {
   if (!S.bedit) return;
-  const {k, id} = S.bedit, name = inp.value.trim();
+  const {k, id} = S.bedit, name = inp.value.replace(/\s+/g, " ").trim();
   S.bedit = null;
   const cur = blist(k).find(i => i.id === id);
   if (!cur || !name || name === cur.name) { renderLists(); return; }
@@ -2204,7 +2209,7 @@ function saveBedit(inp) {
 }
 listsGrid.addEventListener("keydown", e => {
   if (!e.target.dataset.beditIn) return;
-  if (e.key === "Enter") { e.preventDefault(); saveBedit(e.target); }
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); saveBedit(e.target); }
   else if (e.key === "Escape") { S.bedit = null; renderLists(); }
 });
 listsGrid.addEventListener("focusout", e => { if (e.target.dataset.beditIn && S.bedit) saveBedit(e.target); });
