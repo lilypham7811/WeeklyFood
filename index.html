@@ -424,6 +424,9 @@ table.spend{width:100%;border-collapse:collapse;font-size:1.05rem}
 .bitem.done label{text-decoration:line-through;color:var(--ink-3)}
 .bitem .x{border:0;background:none;color:var(--ink-3);width:2rem;height:2rem;border-radius:.4rem;font-size:1.1rem}
 .bitem .x:hover{background:var(--line-2);color:var(--bad)}
+.bitem .x[data-bedit]:hover{color:var(--lc)}
+.bacts{display:flex;gap:.1rem}
+.bedit-in{min-width:0;width:100%;min-height:2.2rem;border:2px solid var(--lc);border-radius:.45rem;padding:0 .6rem;font:inherit;background:var(--surface);color:var(--ink)}
 .badd{display:flex;gap:.4rem;padding:.7rem .9rem}
 .badd input{flex:1;min-width:0;min-height:2.6rem;border:2px dashed var(--line);border-radius:.6rem;background:transparent;padding:0 .8rem;font-size:1rem}
 .badd input:focus{border-style:solid;border-color:var(--lc);outline:none}
@@ -1621,7 +1624,9 @@ function renderLists() {
     const todo = items.filter(i => !i.done).length; if (b.todo) tasks += todo; else left += todo;
     return `<div class="blist" style="--lc:${b.c}">
       <div class="blist-head"><div><h3>${b.l}</h3><div class="blist-sub">${b.sub}</div></div><span>${items.length ? `còn ${todo}/${items.length}` : ""}</span></div>
-      <ul>${items.map(i => `<li class="bitem${i.done ? " done" : ""}"><input type="checkbox" id="b_${i.id}" data-bk="${b.k}" data-bid="${i.id}" ${i.done ? "checked" : ""} ${S.canWrite ? "" : "disabled"}><label for="b_${i.id}">${esc(i.name)}</label>${S.canWrite ? `<button class="x" data-bdel="${i.id}" data-bk="${b.k}" aria-label="Xoá ${esc(i.name)}">×</button>` : "<span></span>"}</li>`).join("")
+      <ul>${items.map(i => `<li class="bitem${i.done ? " done" : ""}"><input type="checkbox" id="b_${i.id}" data-bk="${b.k}" data-bid="${i.id}" ${i.done ? "checked" : ""} ${S.canWrite ? "" : "disabled"}>${S.bedit && S.bedit.k === b.k && S.bedit.id === i.id
+        ? `<input class="bedit-in" data-bedit-in="${i.id}" data-bk="${b.k}" value="${esc(i.name)}" aria-label="Sửa tên món">`
+        : `<label for="b_${i.id}">${esc(i.name)}</label>`}${S.canWrite ? `<span class="bacts"><button class="x" data-bedit="${i.id}" data-bk="${b.k}" aria-label="Sửa ${esc(i.name)}" title="Sửa">✎</button><button class="x" data-bdel="${i.id}" data-bk="${b.k}" aria-label="Xoá ${esc(i.name)}" title="Xoá">×</button></span>` : "<span></span>"}</li>`).join("")
         || `<li class="bempty">Chưa có gì. Gõ ${b.todo ? "việc cần làm" : "món cần mua"} vào ô bên dưới.</li>`}</ul>
       ${S.canWrite ? `<form class="badd" data-bk="${b.k}"><label class="sr" for="badd_${b.k}">Thêm vào ${b.l}</label><input id="badd_${b.k}" data-badd="${b.k}" placeholder="${b.todo ? "Thêm việc cần làm…" : "Thêm món cần mua…"}" autocomplete="off"><button class="btn">Thêm</button></form>` : ""}
       <div class="blist-foot">
@@ -1630,7 +1635,9 @@ function renderLists() {
       </div>
     </div>`;
   }).join("");
-  if (focusK) { const inp = document.getElementById("badd_" + focusK); if (inp) inp.focus(); }
+  const ed = grid.querySelector("[data-bedit-in]");
+  if (ed) { ed.focus(); ed.select(); }
+  else if (focusK) { const inp = document.getElementById("badd_" + focusK); if (inp) inp.focus(); }
   const nav = $("#navLists"); if (nav) nav.textContent = [left ? `${left} món cần mua` : "", tasks ? `${tasks} việc cần làm` : ""].filter(Boolean).join(" · ") || "Chưa có gì cần mua";
 }
 
@@ -2186,11 +2193,28 @@ listsGrid.addEventListener("submit", e => {
   saveBlist(k, [...blist(k), {id: uid(), name, done: false, at: Date.now()}]);
   const again = document.getElementById("badd_" + k); if (again) { again.value = ""; again.focus(); }
 });
+function saveBedit(inp) {
+  if (!S.bedit) return;
+  const {k, id} = S.bedit, name = inp.value.trim();
+  S.bedit = null;
+  const cur = blist(k).find(i => i.id === id);
+  if (!cur || !name || name === cur.name) { renderLists(); return; }
+  saveBlist(k, blist(k).map(i => i.id === id ? {...i, name} : i));
+  toast(`Đã sửa thành “${name}”.`);
+}
+listsGrid.addEventListener("keydown", e => {
+  if (!e.target.dataset.beditIn) return;
+  if (e.key === "Enter") { e.preventDefault(); saveBedit(e.target); }
+  else if (e.key === "Escape") { S.bedit = null; renderLists(); }
+});
+listsGrid.addEventListener("focusout", e => { if (e.target.dataset.beditIn && S.bedit) saveBedit(e.target); });
 listsGrid.addEventListener("change", e => {
   const {bk, bid} = e.target.dataset; if (!bk || !bid) return;
   saveBlist(bk, blist(bk).map(i => i.id === bid ? {...i, done: e.target.checked} : i));
 });
 listsGrid.addEventListener("click", e => {
+  const ed = e.target.closest("[data-bedit]");
+  if (ed) { S.bedit = {k: ed.dataset.bk, id: ed.dataset.bedit}; renderLists(); return; }
   const del = e.target.closest("[data-bdel]");
   if (del) { saveBlist(del.dataset.bk, blist(del.dataset.bk).filter(i => i.id !== del.dataset.bdel)); return; }
   const clr = e.target.closest("[data-bclear]");
